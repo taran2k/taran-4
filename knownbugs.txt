@@ -1,0 +1,13 @@
+you can connect rows that are not the same size. they will get connected up until the shortest
+row size. however, the longer row will remain intact which could cause some issues when printing
+the board. when printing the board the do-while loop keeps checking if the next tile (the neighbour, 
+so adjacent[2]) exists. for a row longer than the board, the tile will exist and some issues may arise.
+moreover, those tiles (specifically the first tile that is overlength) will not correctly have some of their
+neighbours set. within this game, it is not a problem, because all created rows have the same size.
+
+
+you can navigate too far in navigation mode
+
+double letters not working
+
+gamemode not passed through to setupgomoku in hoofd.cpp
