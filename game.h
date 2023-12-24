@@ -43,7 +43,6 @@ struct AIScope
 class Game
 {
 public:
-    Game();
     Game(int m, int n, int h, int gm, int AI1 = 0, int AI2 = 0);
     ~Game();
     Goboard &getGoboard();
@@ -76,8 +75,7 @@ public:
     Tile *AISmartPlay();
     Tile *AIRandomPlay();
     Tile *HumanPlay();
-    void play();
-    void quit();
+    int play();
 
 private:
     Goboard *board;

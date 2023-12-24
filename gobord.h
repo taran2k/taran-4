@@ -47,18 +47,15 @@ public:
   int getTotalConnections(Tile *tile);
   int getRow(Tile* tile);
   int getColumn(Tile* tile);
-  void connectTilesErrorSpecification(Tile *tile1, Tile *tile2,
-                                      int k, int l);
   void printLetterCoordinates();
   void printRow(Tile *row);
   void print();
   Tile *findAndPlace(int column, int row, char *colour);
   Tile *remove(int column, int row);
-  // TODO
 private:
   Tile *in;
-  Tile *bucket[gd::MAX * gd::MAX + 1]; // <- magical middleman that
-  int height, width;               // prevents memory leaks.
+  Tile *bucket[gd::MAX * gd::MAX + 1]; // <- middleman that helps
+  int height, width;                      // prevent memory leaks.
 };
 
 #endif

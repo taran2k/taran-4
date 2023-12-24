@@ -8,11 +8,13 @@
 #include "gobord.h"
 #include "game.h"
 
+// MoveStack constructor
 MoveStack::MoveStack()
 {
     top = nullptr;
 }
 
+// MoveStack destructor
 MoveStack::~MoveStack()
 {
     while (top)
@@ -34,8 +36,7 @@ bool MoveStack::isEmpty()
     return top == nullptr;
 }
 
-// Pop (delete) a move from the stack and return
-// the move that was popped
+// Pop (delete) the top move from the stack
 void MoveStack::pop()
 {
     if (isEmpty())
@@ -59,11 +60,7 @@ Move *MoveStack::peek()
     return &(top->move);
 }
 
-Game::Game()
-{
-    // board = new Goboard;
-}
-
+// Game constructor
 Game::Game(int m, int n, int h, int gm, int AI1, int AI2)
 {
     board = new Goboard(m, n);
@@ -77,6 +74,7 @@ Game::Game(int m, int n, int h, int gm, int AI1, int AI2)
     perm = 0;
 }
 
+// Game destructor
 Game::~Game()
 {
     delete board;
@@ -89,6 +87,10 @@ void Game::switchCurrentPlayer()
     current_player = 3 - current_player; // 1 -> 2, 2 -> 1
 }
 
+// Calculate the number of permutations (possible outcomes)
+// for the current board. This is done recursively by
+// placing a tile on the board, switching the current player,
+// and repeating the process until the game is concluded.
 void Game::calculatePermutations()
 {
     Tile *rowTile = board->getInTile();
@@ -99,23 +101,30 @@ void Game::calculatePermutations()
         currentTile = rowTile;
         while (currentTile) // loop through the tiles of the row
         {
-            if (!currentTile->colour) // and if the tile has no colour
-            {                         // colour it
+            if (!currentTile->colour) // and if a tile has no colour,
+            {                         // emulate a turn
                 currentTile->colour = gd::PLAYER_COLOURS
                     [current_player - 1];
                 switchCurrentPlayer();
                 turn++;
-                if (doesTileConcludeGame(currentTile)) // if
-                {                                      // this concludes the game
-                    perm++;                            // increment permutations
-                }
+
+                if (doesTileConcludeGame(currentTile)) // if this turn
+                {                                      // ends the game
+                    perm++;                            // increment 
+                }                                      // perm
                 else                         // otherwise
                 {                            // calculate the permttns
                     calculatePermutations(); // for the new board
                 }
+
                 switchCurrentPlayer();
                 turn--;
                 currentTile->colour = nullptr; // then undo the move
+
+                // If the amount of permutations is higher than 
+                // LARGE_NUM_MAX or < 0, set perm to -1 to indicate
+                // that the number of permutations is too high to be
+                // calculated.
                 if (perm > gd::LARGE_NUM_MAX || perm < 0)
                 {
                     perm = -1;
@@ -128,15 +137,17 @@ void Game::calculatePermutations()
     }
 }
 
+// Read the input for the options menu
 char Game::readOptionInput(char c)
 {
     // the player who initialized the action
     int player = current_player;
 
+    // IF c == '<':
+    // Undo moves until the last move of the current player
+    // is undone. (for this 2-player game that means undoing 2 moves)
     if (c == '<')
     {
-        // Undo moves until the last move of the current player
-        // is undone.
         if (undoStack.isEmpty() || turn <= 2)
         {
             std::cout << "There are no moves to undo." << std::endl;
@@ -152,10 +163,12 @@ char Game::readOptionInput(char c)
 
         return '\0';
     }
+
+    // IF c == '>':
+    // Redo moves until the last move of the current player
+    // is redone. (for this 2-player game that means redoing 2 moves)
     else if (c == '>')
     {
-        // Redo moves until the last move of the current player
-        // is redone.
         if (redoStack.isEmpty())
         {
             std::cout << "There are no moves to redo." << std::endl;
@@ -171,11 +184,17 @@ char Game::readOptionInput(char c)
 
         return '\0';
     }
+
+    // IF c == '*':
+    // Calculate the number of permutations for the current board
     else if (c == '*')
     {
         perm = 0;
         calculatePermutations();
     }
+
+    // IF c == '~':
+    // End the game by setting concluded to true
     else if (c == '~')
     {
         concluded = true;
@@ -185,9 +204,9 @@ char Game::readOptionInput(char c)
     return c;
 }
 
+// Print the options menu
 void Game::printMenu()
 {
-
     std::cout << "  It's your turn.";
     if (undoStack.peek() && turn > 2)
     {
@@ -197,7 +216,7 @@ void Game::printMenu()
     {
         std::cout << " Press [>] to redo your last move.";
     }
-    std::cout << " Press [~] to end the game." << std::endl;
+    std::cout << " Press [~] to surrender." << std::endl;
 
     std::cout << " Possible oucomes: ";
     if (perm > 0)
@@ -214,12 +233,13 @@ void Game::printMenu()
     }
 }
 
+// Print the prompt for the player to place a tile
 void Game::printInput()
 {
-    // Print the prompt for the player to place a tile
     std::cout << "Enter coordinates: ";
 }
 
+// Print the board and the current player
 void Game::printGame()
 {
     menugroup player("menus/player.cfg");
@@ -283,6 +303,7 @@ void Game::undoPlay()
     // Check if the undo stack is empty
     if (undoStack.isEmpty())
     {
+        // If it is, return
         return;
     }
 
@@ -303,6 +324,7 @@ void Game::redoPlay()
     // Check if the redo stack is empty
     if (redoStack.isEmpty())
     {
+        // If it is, return
         return;
     }
 
@@ -378,8 +400,9 @@ void Game::AISetSearchRadius()
 
 // Calculate if there is a tile that can be placed to prevent
 // the opponent from a guaranteed win in 2 turns (that is, if
-// a single turn of the opponent creates at least 2 winning
+// a single turn by the opponent creates at least 2 winning
 // possibilities the move thereafter)
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIDefenseDepth1(Tile *skipTile)
 {
     int row = 1;
@@ -418,6 +441,11 @@ Tile *Game::AIDefenseDepth1(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if there is a tile that can be placed to prevent
+// the opponent from a guaranteed win in 3 turns (that is, if
+// a single turn by the opponent creates at least 2 assists 
+// for winning possibilities two moves thereafter)
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIDefenseDepth2(Tile *skipTile)
 {
     int row = 1;
@@ -456,6 +484,14 @@ Tile *Game::AIDefenseDepth2(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if there is a tile that can be placed to prevent
+// the opponent from a guaranteed win in 4 turns (that is, if
+// a single turn by the opponent creates at least 2 assists
+// for winning possibilities three moves thereafter)
+// NOTE: unlike depth 0,1,2; depth 3 works within a scope of
+// tiles surrounding the last two moves making it less
+// accurate. This is to increase performance.
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIDefenseDepth3(Tile *skipTile)
 {
     // Call AISearchRadius and get an AIScope object with the
@@ -487,6 +523,11 @@ Tile *Game::AIDefenseDepth3(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if there is a tile that can be placed to create
+// a guaranteed win in 2 turns (that is, if a single turn by
+// the AI creates at least 2 winning possibilities the move
+// thereafter)
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIOffenseDepth1(Tile *skipTile)
 {
     int row = 1;
@@ -525,6 +566,11 @@ Tile *Game::AIOffenseDepth1(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if there is a tile that can be placed to create
+// a guaranteed win in 3 turns (that is, if a single turn by
+// the AI creates at least 2 assists for winning possibilities
+// two moves thereafter)
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIOffenseDepth2(Tile *skipTile)
 {
     int row = 1;
@@ -563,6 +609,14 @@ Tile *Game::AIOffenseDepth2(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if there is a tile that can be placed to create
+// a guaranteed win in 4 turns (that is, if a single turn by
+// the AI creates at least 2 assists for winning possibilities
+// three moves thereafter)
+// NOTE: unlike depth 0,1,2; depth 3 works within a scope of
+// tiles surrounding the last two moves making it less
+// accurate. This is to increase performance.
+// Returns a pointer to the tile that should be placed.
 Tile *Game::AIOffenseDepth3(Tile *skipTile)
 {
     // Call AISearchRadius and get an AIScope object with the
@@ -594,7 +648,10 @@ Tile *Game::AIOffenseDepth3(Tile *skipTile)
     return nullptr;
 }
 
-Tile *Game::AIOffense() // todo : prevent placing on unwinnable spots
+// Calculate an offensive move based on very basic strategy
+// (to be used when no other move can be made). Returns a
+// pointer to the tile that should be placed.
+Tile *Game::AIOffense()
 {
     int row = 1;
     int column = 1;
@@ -618,15 +675,20 @@ Tile *Game::AIOffense() // todo : prevent placing on unwinnable spots
                 }
                 if (preferredTile)
                 {
-                    if (int a = board->getLongestConnection(currentTile) > longestConnection)
+                    if (int a =
+                    board->getLongestConnection(currentTile) 
+                    > longestConnection)
                     {
                         preferredTile = currentTile;
                         longestConnection = a;
                     }
 
-                    else if (board->getLongestConnection(currentTile) == longestConnection)
+                    else if (board->getLongestConnection(currentTile) 
+                    == longestConnection)
                     {
-                        if (int b = board->getTotalConnections(currentTile) > totalConnections)
+                        if (int b = 
+                        board->getTotalConnections(currentTile) 
+                        > totalConnections)
                         {
                             preferredTile = currentTile;
                             totalConnections = b;
@@ -652,6 +714,8 @@ Tile *Game::AIOffense() // todo : prevent placing on unwinnable spots
     return preferredTile;
 }
 
+// Calculate if a tile can be placed to win the game. Returns
+// a pointer to the tile that should be placed.
 Tile *Game::AIWin(Tile *skipTile)
 {
     int row = 1;
@@ -681,6 +745,8 @@ Tile *Game::AIWin(Tile *skipTile)
     return nullptr;
 }
 
+// Calculate if a tile can be placed to block a win. Returns
+// a pointer to the tile that should be placed.
 Tile *Game::AIBlockWin(Tile *skipTile)
 {
     int row = 1;
@@ -710,6 +776,9 @@ Tile *Game::AIBlockWin(Tile *skipTile)
     return nullptr;
 }
 
+// Have the AI find a strategic move by going through a set of
+// calculations. Places the tile and returns a pointer to the
+// placed tile.
 Tile *Game::AISmartPlay()
 {
     Tile *tileToPlace = nullptr;
@@ -730,6 +799,7 @@ Tile *Game::AISmartPlay()
         std::cout << board->getColumn(t) << std::endl;
         tileToPlace = t;
     }
+    // If the AI can block a win, place a tile to block the win
     else if (Tile *t = AIBlockWin())
     {
         std::cout << "AI can block win" << std::endl; // debug
@@ -738,6 +808,7 @@ Tile *Game::AISmartPlay()
         std::cout << board->getColumn(t) << std::endl;
         tileToPlace = t;
     }
+
     // IF STARTING FIRST: place a tile in the middle
     else if (turn == 1)
     {
@@ -767,32 +838,32 @@ Tile *Game::AISmartPlay()
     // IF IT'S NOT TURN 1...
     else if (Tile *t = AIOffenseDepth1())
     {
-        std::cout << "AI will attack at level 1" << std::endl; // debug
+        //std::cout << "AI will attack at level 1" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth1())
     {
-        std::cout << "AI will defend at level 1" << std::endl; // debug
+        //std::cout << "AI will defend at level 1" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth2())
     {
-        std::cout << "AI will attack at level 2" << std::endl; // debug
+        //std::cout << "AI will attack at level 2" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth2())
     {
-        std::cout << "AI will defend at level 2" << std::endl; // debug
+        //std::cout << "AI will defend at level 2" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth3())
     {
-        std::cout << "AI will attack at level 3" << std::endl; // debug
+        //std::cout << "AI will attack at level 3" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth3())
     {
-        std::cout << "AI will defend at level 3" << std::endl; // debug
+        //std::cout << "AI will defend at level 3" << std::endl; // debug
         tileToPlace = t;
     }
 
@@ -841,7 +912,7 @@ Tile *Game::AISmartPlay()
         }
     }
 
-    // If no win can be blocked, place a tile next to the longest
+    // If no move was found, place a tile next to the longest
     // existing AI connection on the board, with a preference for
     // as many free spaces as possible around the tile.
     else if (Tile *t = AIOffense())
@@ -906,29 +977,18 @@ Tile *Game::AISmartPlay()
     return tileToPlace;
 }
 
-// Place a tile randomly, but within a radius of h-1 
-// (where h is the win threshold)
+// Place a tile randomly on an open spot
 Tile *Game::AIRandomPlay() 
 {
     Tile *tileToPlace;
 
-    if (turn == 1)
-    {
-        do {
-            int row = rand() % board->getHeight();
-            int column = rand() % board->getWidth();
+    do {
+        int row = rand() % board->getHeight() + 1;
+        int column = rand() % board->getWidth() + 1;
 
-            tileToPlace = board->findTileOnBoard(row, column);
-        } while (tileToPlace->colour);
-    }
-    else
-    {
-        AISetSearchRadius();
-        do {
-            int p = rand() % scope.tilesCount;
-            tileToPlace = scope.tilesToCheck[p];
-        } while (tileToPlace->colour);
-    }
+        tileToPlace = board->findTileOnBoard(row, column);
+    } while (tileToPlace->colour);
+    
 
     // Place the tile
     tileToPlace->colour = gd::PLAYER_COLOURS[current_player - 1];
@@ -936,6 +996,7 @@ Tile *Game::AIRandomPlay()
     return tileToPlace;
 }
 
+// Place a tile based on the input of the player
 Tile *Game::HumanPlay()
 {
     printGame();
@@ -962,8 +1023,7 @@ Tile *Game::HumanPlay()
     }
     int row = input;
 
-    // Check if the tile was placed at (column, row) and if it was
-    // increment the turn counter. If it wasn't, continue the loop
+    // Return the tile that was placed
     return board->findAndPlace(column, row,
                                gd::PLAYER_COLOURS[current_player - 1]);
 }
@@ -1010,8 +1070,8 @@ Tile *Game::playturn()
     return nullptr;
 }
 
-// Play the game
-void Game::play()
+// Play the game and return the turn on which the game was concluded
+int Game::play()
 {
     while (!concluded)
     {
@@ -1054,11 +1114,6 @@ void Game::play()
         switchCurrentPlayer();
         perm = 0;
     }
-}
 
-// Quit the game
-void Game::quit()
-{
-    std::cout << "Quitting game..." << std::endl;
-    exit(0);
+    return turn;
 }

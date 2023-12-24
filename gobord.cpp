@@ -5,6 +5,7 @@
 #include "basicfunctions.h"
 #include "namespacealiases.h"
 
+// Tile constructor
 Tile::Tile()
 {
   colour = nullptr;
@@ -14,11 +15,13 @@ Tile::Tile()
   }
 }
 
+// Tile destructor
 Tile::~Tile()
 {
   delete colour;
 }
 
+// Goboard constructor
 Goboard::Goboard(int height, int width)
 {
   this->height = height;
@@ -37,9 +40,12 @@ Goboard::Goboard(int height, int width)
       newTile();
     }
   }
+
+  // Make the board
   makeBoard();
 }
 
+// Goboard destructor
 Goboard::~Goboard()
 {
   for (int i = 0; i < gd::MAX * gd::MAX; i++)
@@ -134,10 +140,6 @@ void Goboard::connectTilesVertically(Tile *tile1, Tile *tile2)
     tile1->adjacents[4] = tile2;
     tile2->adjacents[0] = tile1;
   }
-  else
-  {
-   //debug
-  }
 }
 
 // Connects tile1 and tile2 diagonally upwards.
@@ -150,10 +152,6 @@ void Goboard::connectTilesDiagonallyUpwards(Tile *tile1, Tile *tile2)
     tile1->adjacents[5] = tile2;
     tile2->adjacents[1] = tile1;
   }
-  else
-  {
-    //debug
-  }
 }
 
 // Connects tile1 and tile2 diagonally downwards.
@@ -165,10 +163,6 @@ void Goboard::connectTilesDiagonallyDownwards(Tile *tile1, Tile *tile2)
   {
     tile1->adjacents[3] = tile2;
     tile2->adjacents[7] = tile1;
-  }
-  else
-  {
-    //debug
   }
 }
 
@@ -196,7 +190,7 @@ void Goboard::disconnectTile(Tile *tile)
 }
 
 // Makes a row of tiles by connecting them horizontally and
-// returns the starting address of the row.
+// returns the address of the left most tile.
 Tile *Goboard::makeRow(int length)
 {
   Tile *currentTile = takeTileFromBucket();
@@ -204,8 +198,8 @@ Tile *Goboard::makeRow(int length)
 
   for (int i = 0; i < length - 1; i++)
   {
-    Tile *newTile = takeTileFromBucket();
-    connectTilesHorizontally(currentTile, newTile);
+    Tile *newTile = takeTileFromBucket();       // <- not actually new
+    connectTilesHorizontally(currentTile, newTile); // but from bucket
     currentTile = newTile;
   }
 
@@ -213,7 +207,7 @@ Tile *Goboard::makeRow(int length)
 }
 
 // Connects two horizontal rows together. row1 and row2
-// are starting addresses of the rows.
+// are starting addresses of the rows (LTR).
 void Goboard::connectRows(Tile *row1, Tile *row2)
 {
   if (row1 && row2)
@@ -260,6 +254,7 @@ void Goboard::connectRows(Tile *row1, Tile *row2)
   }
 }
 
+// Makes a board by connecting rows vertically.
 Tile *Goboard::makeBoard()
 {
   // Use tiles from bucket to create rows and connect
@@ -276,6 +271,8 @@ Tile *Goboard::makeBoard()
   return in;
 }
 
+// Empties a row of tiles by disconnecting them from
+// adjacent tiles and adding them to the bucket.
 void Goboard::emptyRow(Tile *row)
 {
   Tile *currentTile = row;
@@ -295,6 +292,8 @@ void Goboard::emptyRow(Tile *row)
   } while (currentTile);
 }
 
+// Empties the board by disconnecting all tiles from
+// adjacent tiles and adding them to the bucket.
 void Goboard::emptyBoard()
 {
   Tile *currentTile = in;
@@ -347,37 +346,49 @@ int Goboard::getWidth()
   return width;
 }
 
+// Finds a tile on the board by row and column and
+// returns a pointer to it.
 Tile *Goboard::findTileOnBoard(int row, int column)
 {
   Tile *currentTile = in;
 
+  // Go down one row on the board (by setting the current
+  // tile to its adjacents[4] pointer) until the sought for
+  // row is reached.
   for (int i = 1; i < row; i++)
   {
     if (currentTile->adjacents[4])
     {
       currentTile = currentTile->adjacents[4];
     }
+    // If the row doesn't exist, return nullptr
     else
     {
       return nullptr;
     }
   }
 
+  // Go right one column on the board (by setting the current
+  // tile to its adjacents[2] pointer) until the sought for
+  // column is reached.
   for (int j = 1; j < column; j++)
   {
     if (currentTile->adjacents[2])
     {
       currentTile = currentTile->adjacents[2];
     }
+    // If the column doesn't exist, return nullptr
     else
     {
       return nullptr;
     }
   }
 
+  // Return the sought for tile (currentTile)
   return currentTile;
 }
 
+// Get the size of the horizontal connection of a tile
 int Goboard::getHorizontalConnection(Tile *tile)
 {
   if (tile)
@@ -419,6 +430,7 @@ int Goboard::getHorizontalConnection(Tile *tile)
   return -1;
 }
 
+// Get the size of the vertical connection of a tile
 int Goboard::getVerticalConnection(Tile *tile)
 {
   if (tile)
@@ -460,6 +472,7 @@ int Goboard::getVerticalConnection(Tile *tile)
   return -1;
 }
 
+// Get the size of the diagonal up connection of a tile
 int Goboard::getDiagonalUpConnection(Tile *tile)
 {
   if (tile)
@@ -501,6 +514,7 @@ int Goboard::getDiagonalUpConnection(Tile *tile)
   return -1;
 }
 
+// Get the size of the diagonal down connection of a tile
 int Goboard::getDiagonalDownConnection(Tile *tile)
 {
   if (tile)
@@ -542,6 +556,7 @@ int Goboard::getDiagonalDownConnection(Tile *tile)
   return -1;
 }
 
+// Get the size of the longest connection of a tile
 int Goboard::getLongestConnection(Tile *tile)
 {
   int horizontal_connection = getHorizontalConnection(tile);
@@ -566,6 +581,7 @@ int Goboard::getLongestConnection(Tile *tile)
   return connection_size;
 }
 
+// Get the total size of all connections of a tile
 int Goboard::getTotalConnections(Tile *tile)
 {
   int horizontal_connection = getHorizontalConnection(tile);
@@ -577,98 +593,44 @@ int Goboard::getTotalConnections(Tile *tile)
          diagonalup_connection + diagonaldown_connection;
 }
 
+// Get the row number of a tile by counting the number of
+// tiles above it.
 int Goboard::getRow(Tile *tile)
 {
   int row = 1;
   Tile *currentTile = tile;
 
+  // As long as currentTile is not a nullpointer
   while (currentTile)
   {
-    if (currentTile->adjacents[0])
-    {
-      currentTile = currentTile->adjacents[0];
-      row++;
-    }
-    else
-    {
-      break;
-    }
+    // Set currentTile to be the tile above it
+    currentTile = currentTile->adjacents[0];
+    // And increment row
+    row++;
   }
 
   return row;
 }
 
+// Get the column number of a tile by counting the number of
+// tiles to the left of it.
 int Goboard::getColumn(Tile *tile)
 {
   int column = 1;
   Tile *currentTile = tile;
 
+  // As long as currentTile is not a nullpointer
   while (currentTile)
   {
-    if (currentTile->adjacents[6])
-    {
-      currentTile = currentTile->adjacents[6];
-      column++;
-    }
-    else
-    {
-      break;
-    }
+    // Set currentTile to be the tile to the left of it
+    currentTile = currentTile->adjacents[6];
+    // And increment column
+    column++;
   }
 
   return column;
 }
 // END GETTERS
-
-// ERROR SPECIFICATION
-
-void Goboard::connectTilesErrorSpecification(Tile *tile1,
-                                             Tile *tile2, int k, int l)
-{
-
-  if (!tile1)
-  {
-    if (!tile2)
-    {
-      std::cout << "Both tiles are null." << std::endl;
-    }
-    else
-    {
-      std::cout << "Tile 1 is null." << std::endl;
-    }
-    return;
-  }
-
-  if (!tile2)
-  {
-    std::cout << "Tile 2 is null" << std::endl;
-    return;
-  }
-
-  if (tile1 == tile2)
-  {
-    std::cout << "A tile can not be connected to itself.";
-    std::cout << std::endl;
-    return;
-  }
-
-  if (tile1->adjacents[k] != nullptr)
-  {
-    std::cout << "Tile 1 already has a tile connected to it.";
-    std::cout << std::endl;
-    return;
-  }
-
-  if (tile2->adjacents[l] != nullptr)
-  {
-    std::cout << "Tile 2 already has a tile connected to it.";
-    std::cout << std::endl;
-    return;
-  }
-
-  return;
-}
-// END ERROR SPECIFICATION
 
 // Places a tile on the board. Returns a pointer to the placed tile
 Tile *Goboard::findAndPlace(int column, int row, char *colour)
@@ -718,16 +680,22 @@ Tile *Goboard::remove(int column, int row)
   return nullptr;
 }
 
+// Prints the letter coordinates on the board
 void Goboard::printLetterCoordinates()
 {
+  // Folds are one iteration of the alphabet
   int folds = bsf::floor(width / alph::size);
 
+  // Iterate over the folds (alph::size letters per fold)
   for (int i = 0; i <= folds; i++)
   {
+    // Check if it's the last fold
     if (i == folds)
     {
+      // Iterate over the remaining letters in the last fold
       for (int j = 0; j < (width % alph::size); j++)
       {
+        // Print a space if it's fold 0, otherwise the fold letter
         if (i == 0)
         {
           std::cout << " ";
@@ -736,13 +704,16 @@ void Goboard::printLetterCoordinates()
         {
           std::cout << alph::upper[i - 1];
         }
+        // Print the current letter and a space
         std::cout << alph::upper[j] << " ";
       }
     }
-    else
+    else // if not the last fold
     {
+      // Iterate over the letters in a fold
       for (int j = 0; j < alph::size; j++)
       {
+        // Print a space if it's fold 0, otherwise the fold letter
         if (i == 0)
         {
           std::cout << " ";
@@ -751,12 +722,14 @@ void Goboard::printLetterCoordinates()
         {
           std::cout << alph::upper[i - 1];
         }
+        // Print the current letter and a space
         std::cout << alph::upper[j] << " ";
       }
     }
   }
 }
 
+// Prints the contents of a row
 void Goboard::printRow(Tile *row)
 {
   Tile *currentTile = row;
@@ -790,7 +763,7 @@ void Goboard::print()
 {
   Tile *currentRow = in;
 
-  // Print the first row of coordinates
+  // Print the first row with letter coordinates
   std::cout << std::endl;
   std::cout << "   ";
   printLetterCoordinates();
