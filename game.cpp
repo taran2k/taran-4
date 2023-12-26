@@ -3,8 +3,6 @@
 #include "GlobalData.h"
 #include "basicfunctions.h"
 #include "namespacealiases.h"
-#include "menus.h"
-#include "menugroups.h"
 #include "gobord.h"
 #include "game.h"
 
@@ -111,8 +109,8 @@ void Game::calculatePermutations()
                     perm++;                            // increment
                 }                                      // perm
                 else                                   // otherwise
-                {                                      // calculate the permttns
-                    calculatePermutations();           // for the new board
+                {                                      // calculate perm
+                    calculatePermutations();           // for new board
                 }
 
                 switchCurrentPlayer();
@@ -240,10 +238,16 @@ void Game::printInput()
 // Print the board and the current player
 void Game::printGame()
 {
-    menugroup player("menus/player.cfg");
-    // Print the board and the current player
     board->print();
-    player.print(2, current_player - 1, false, false);
+    std::cout << std::endl;
+    std::cout << "  X--------------X";
+    std::cout << std::endl;
+    std::cout << "  |   Player " << current_player << "   |";
+    std::cout << std::endl;
+    std::cout << "  X--------------X";
+    std::cout << std::endl;
+    std::cout << std::endl;
+
     // Print the options menu
     printMenu();
 
@@ -289,7 +293,8 @@ bool Game::isTie()
 
 bool Game::doesTileConcludeGame(Tile *placedTile)
 {
-    return (board->getLongestConnection(placedTile) >= win_threshold || isTie());
+    return (board->getLongestConnection(placedTile) >= 
+    win_threshold || isTie());
 }
 // END GETTERS
 
@@ -352,16 +357,24 @@ void Game::AISetSearchRadius()
     // Get the last and second to last moves
     Move lastMove = *undoStack.peek();
     undoStack.pop();
-    Move secondLastMove = undoStack.isEmpty() ? lastMove : *undoStack.peek();
+
+    Move secondLastMove = 
+    undoStack.isEmpty() ? lastMove : *undoStack.peek();
+
     undoStack.push(lastMove);
 
     // add tiles within the search radius to the tilesToCheck array
     auto addTilesWithinRadius = [&](Move move)
     {
         int startRow = bsf::max(1, move.row - searchRadius);
-        int endRow = bsf::min(board->getHeight(), move.row + searchRadius);
+
+        int endRow = 
+        bsf::min(board->getHeight(), move.row + searchRadius);
+
         int startColumn = bsf::max(1, move.column - searchRadius);
-        int endColumn = bsf::min(board->getWidth(), move.column + searchRadius);
+
+        int endColumn = 
+        bsf::min(board->getWidth(), move.column + searchRadius);
 
         for (int row = startRow; row <= endRow; ++row)
         {
@@ -411,7 +424,8 @@ Tile *Game::AIDefenseDepth1(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
+                currentTile->colour = 
+                gd::PLAYER_COLOURS[2 - current_player];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIBlockWin();
@@ -454,7 +468,8 @@ Tile *Game::AIDefenseDepth2(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
+                currentTile->colour = 
+                gd::PLAYER_COLOURS[2 - current_player];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIDefenseDepth1();
@@ -500,7 +515,8 @@ Tile *Game::AIDefenseDepth3(Tile *skipTile)
         if (skipTile != currentTile && !currentTile->colour)
         {
             // simulate an opposite turn
-            currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
+            currentTile->colour = 
+            gd::PLAYER_COLOURS[2 - current_player];
 
             // see if a win can be blocked with the simulated move
             Tile *t = AIDefenseDepth2();
@@ -540,7 +556,8 @@ Tile *Game::AIOffenseDepth1(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a turn
-                currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
+                currentTile->colour = 
+                gd::PLAYER_COLOURS[current_player - 1];
 
                 // see if a win can be made
                 Tile *t = AIWin();
@@ -583,7 +600,8 @@ Tile *Game::AIOffenseDepth2(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
+                currentTile->colour = 
+                gd::PLAYER_COLOURS[current_player - 1];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIOffenseDepth1();
@@ -629,7 +647,8 @@ Tile *Game::AIOffenseDepth3(Tile *skipTile)
         if (skipTile != currentTile && !currentTile->colour)
         {
             // simulate a opposite turn
-            currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
+            currentTile->colour = 
+            gd::PLAYER_COLOURS[current_player - 1];
 
             // see if a win can be blocked with the simulated move
             Tile *t = AIOffenseDepth2();
@@ -679,16 +698,19 @@ Tile *Game::AIOffense()
                 if (preferredTile)
                 {
                     if (int a =
-                            board->getLongestConnection(currentTile) > longestConnection)
+                            board->getLongestConnection(currentTile) 
+                            > longestConnection)
                     {
                         preferredTile = currentTile;
                         longestConnection = a;
                     }
 
-                    else if (board->getLongestConnection(currentTile) == longestConnection)
+                    else if (board->getLongestConnection(currentTile) 
+                    == longestConnection)
                     {
                         if (int b =
-                                board->getTotalConnections(currentTile) > totalConnections)
+                                board->getTotalConnections(currentTile) 
+                                > totalConnections)
                         {
                             preferredTile = currentTile;
                             totalConnections = b;
@@ -830,32 +852,32 @@ Tile *Game::AISmartPlay()
     // IF IT'S NOT TURN 1...
     else if (Tile *t = AIOffenseDepth1())
     {
-        // std::cout << "AI will attack at level 1" << std::endl; // debug
+        //std::cout << "AI will attack at level 1" << std::endl;//debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth1())
     {
-        // std::cout << "AI will defend at level 1" << std::endl; // debug
+        //std::cout << "AI will defend at level 1" << std::endl;//debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth2())
     {
-        // std::cout << "AI will attack at level 2" << std::endl; // debug
+        //std::cout << "AI will attack at level 2" << std::endl;//debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth2())
     {
-        // std::cout << "AI will defend at level 2" << std::endl; // debug
+        //std::cout << "AI will defend at level 2" << std::endl;//debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth3())
     {
-        // std::cout << "AI will attack at level 3" << std::endl; // debug
+        //std::cout << "AI will attack at level 3" << std::endl;//debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth3())
     {
-        // std::cout << "AI will defend at level 3" << std::endl; // debug
+        //std::cout << "AI will defend at level 3" << std::endl;//debug
         tileToPlace = t;
     }
 
@@ -868,8 +890,10 @@ Tile *Game::AISmartPlay()
     // distance) and place a tile here.
     else if (turn == 2 && last)
     {
-        if (last->adjacents[1] == nullptr || last->adjacents[3] == nullptr ||
-            last->adjacents[5] == nullptr || last->adjacents[7] == nullptr)
+        if (last->adjacents[1] == nullptr || 
+            last->adjacents[3] == nullptr ||
+            last->adjacents[5] == nullptr ||
+            last->adjacents[7] == nullptr)
         {
             tileToPlace = board->findTileOnBoard(
                 bsf::ceil(board->getHeight() / 2.0),

@@ -230,7 +230,7 @@ Tile *Goboard::makeRow(int length)
 
   for (int i = 0; i < length - 1; i++)
   {
-    Tile *newTile = tileStack.next(currentTile);     // <- not actually new
+    Tile *newTile = tileStack.next(currentTile); //<-not actually new
     connectTilesHorizontally(currentTile, newTile); // but from stack
     currentTile = newTile;
   }

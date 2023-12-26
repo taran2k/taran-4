@@ -1,84 +1,23 @@
 // file hoofd.cpp (main)
+// if you're reading this, you're a nerd
+
+// Creator: Taran van Ess
+// Date: 26/10/2023
+// Version: 1.0.0
+// Purpose: Game in which two players take turns placing
+// pieces on a board. The first player to connect
+// a certain amount of pieces wins. You can play alone,
+// together, or watch two computers play against eachother.
+// Compiler used: g++ (Ubuntu 11.4.0-1ubuntu1~22.04)
+// Compile: make 
+
 #include <iostream>
 #include <string>
 #include "basicfunctions.h"
 #include "game.h"
 #include "gobord.h"
-#include "menus.h"
-#include "menugroups.h"
 #include "GlobalData.h"
 #include "namespacealiases.h"
-
-// Resets 'CURRENT_MENU' to 0 and calls function 'func'
-// with arguments 'args'.
-template<typename... Args>
-int CallAndReset(int (*func)(Args&...), Args&... args) {
-    gd::CURRENT_MENU = 0;
-    return func(args...);
-}
-
-
-// Reads a char c and navigates the menu accordingly.
-// Returns '\0' for successful navigation, otherwise returns c back.
-char navigate(char c, menugroup &mg, bool nav = true) {
-
-    // If c is the key for the compact mode, toggle compact mode.
-    if (c == mg.groupGetCompactModeKey()) 
-    {
-        if (gd::VIEW != 1) {
-            gd::VIEW = 1;
-        } else {
-            gd::VIEW = gd::DEFAULT_VIEW;
-        }
-        mg.print(gd::VIEW);
-    } 
-    // If c is the key for the navigation mode, toggle navigation mode.
-    else if (c == mg.groupGetNavigationModeKey()) 
-    {
-        if (gd::VIEW != 2) {
-            gd::VIEW = 2;
-        } else {
-            gd::VIEW = gd::DEFAULT_VIEW;
-        }
-        mg.print(gd::VIEW);
-
-    } 
-    // If c is a navigation key and navigation mode is on, navigate.
-    else if (gd::VIEW == 2 && nav &&
-    (c == mg.groupGetNavLeftKey() || c == mg.groupGetNavRightKey())) 
-    {
-        if (c == mg.groupGetNavLeftKey() 
-        && gd::CURRENT_MENU > 0) {
-            mg.print(gd::VIEW, --gd::CURRENT_MENU);
-        } 
-        else if (c == mg.groupGetNavRightKey()
-        && gd::CURRENT_MENU < (mg.groupGetMenuCount() - 1)) {
-            mg.print(gd::VIEW, ++gd::CURRENT_MENU);
-        } 
-    } 
-    // If c is not a navigation key, return c.
-    else 
-    {
-        return c;
-    }    
-
-    // Otherwise, return '\0'.
-    return '\0';
-}
-
-// While o is '\0', read a char c and pass it to navigate() to
-// navigate within the current menugroup 'mg'.
-// 'nav' is an optional parameter that decides whether char c 
-// should be used for navigation or not. True by default.
-char readoption(menugroup &mg, bool nav = true) {
-    char o = '\0';
-    do {
-        char c = bsf::readchr();
-        o = navigate(c, mg, nav);
-    } while (o == '\0');
-
-    return o;
-}
 
 // Bool function that asks the user if they're happy with their input
 // and returns true if they input y/Y, false if they input n/N.
@@ -106,75 +45,41 @@ bool IsHappy() {
     return false;
 }
 
-// Prints the menugroup 'mg' and reads a char option.
-char PrintAndInteract(menugroup &mg) {
-    char option;
-    int menus;
-
-    if (gd::VIEW == 2)
-    {
-        menus = gd::CURRENT_MENU;
-    }
-    else 
-    {
-        menus = -1;
-    }
-    mg.print(gd::VIEW, menus);
-    option = readoption(mg);
-
-    return option;
-}
-
-// Unlocks the quitting option in the 'exit' menu.
-void UnlockQuitting(menu &exit) 
-{
-    exit.menuSetTitle("EXIT");
-    exit.menuSetOptions(0, "[Q]uit Game");
-    exit.menuSetOptions(1, " ");
-    exit.menuSetOptions(2, " ");
-    exit.menuSetOptions(3, "You've unlocked");
-    exit.menuSetOptions(4, "this option");
-    exit.menuSetCompactOption("[Q]uit");
-    exit.menuSetHorizontalSymbol('=');
-}
-
-// Locks the quitting option in the 'exit' menu.
-void LockQuitting(menu &exit)
-{
-    exit.menuSetOptions(4, 
-    std::to_string(100 - gd::GAMES_PLAYED) + " games--");
-
-    exit.menuSetCompactOption("[-] Quit Game (unlocks after " 
-    + std::to_string(100 - gd::GAMES_PLAYED) + " games)");
-}
-
 // Constructs and prints the 'setupgomoku' menugroup.
 int SetUpGomoku(int &m, int &n, int &h) {
-    menugroup gomoku("menus/setupgomoku.cfg");
-    int max = gomoku.groupGetMenuCount(); // 3
-    int temp[max] = {0};
-    int c = 0; // <- offset for default view
 
-    if (gd::VIEW == 0) {
-        c = 1;  // otherwise the first print contains
-                // no menus for the default view. (see print() docs)
-    }
+    int max = 3;
+    int temp[max] = {0};
+    int i = 0;
+
 
     // For each menu in the menugroup, print it and read an int input.
-    for (int i = 0 + c; i < max + c; i++) {
-        menu &currentmenu = gomoku.groupGetMenu(i-c)->m;
-        std::string currentco = currentmenu.menuGetCompactOption();
+    do {
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << " SET UP GAME" << std::endl;
+        if (i == 0)
+        {
+            std::cout << "[Height]" << std::endl;
+            std::cout << "Width" << std::endl;
+            std::cout << "Connect" << std::endl;
+        }
+        if (i == 1)
+        {
+            std::cout << "Height: " << temp[0] << std::endl;
+            std::cout << "[Width]" << std::endl;
+            std::cout << "Connect" << std::endl;
+        }
+        if (i == 2)
+        {
+            std::cout << "Height: " << temp[0] << std::endl;
+            std::cout << "Width: " << temp[1] << std::endl;
+            std::cout << "[Connect]" << std::endl;
+        }
 
-        // Set the title and options of the current menu to indicate
-        // that the user should enter an integer.
-        currentmenu.menuSetOptions(1, "[..]");
-        currentmenu.menuSetCompactOption("[" + currentco + "]");
-        currentmenu.menuSetHasTitle(true);
-
-        // Print the menugroup. For default view, print all menus
-        // up until the current one. For navigation mode, print only the
-        // current menu.
-        gomoku.print(gd::VIEW, i, false);
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << "Value: ";
 
         // Read an int input and check if it's valid. If not, 
         // read again until it is.
@@ -186,23 +91,19 @@ int SetUpGomoku(int &m, int &n, int &h) {
         }
 
         // Store the input in the temp array.
-        temp[i-c] = input;
-
-        // Set the title and options of the current menu to indicate
-        // that the user has entered an integer.
-        currentmenu.menuSetOptions(1, std::to_string(temp[i-c]));
-        currentmenu.menuSetCompactOption(
-            currentco + ": " + std::to_string(temp[i-c])
-        );
-        currentmenu.menuSetHasTitle(false);
-
-        // If the view is navigation mode, print the menu again
-        // to show the changes.
-        if (gd::VIEW == 2) {
-            gomoku.print(gd::VIEW, i, false);
-        }
-    }
-    gomoku.print(gd::VIEW, max + c, false, false);
+        temp[i] = input;
+        i++;
+    } while (i < max);
+    
+    // Ask for confirmation of input
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << " SET UP GAME" << std::endl;
+    std::cout << "Height: " << temp[0] << std::endl;
+    std::cout << "Width: " << temp[1] << std::endl;
+    std::cout << "Connect: " << temp[2] << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
 
     // Check if connect is higher than the board dimensions.
     if (temp[2] > temp[0] && temp[2] > temp[1] 
@@ -227,68 +128,60 @@ int SetUpGomoku(int &m, int &n, int &h) {
     return 0;
 }
 
-void AISettingsSetMenu(menu &currentmenu, int AI)
-{
-    currentmenu.menuSetTitle("COM" + std::to_string(AI+1) 
-    + "     < HARD >");
-    currentmenu.menuSetOptions(0, "Use arrows < to change >");
-    currentmenu.menuSetOptions(1, "Or press [H] or [R]");
-    currentmenu.menuSetOptions(2, "Press [V] to confirm");
 
-    currentmenu.menuSetCompactOption("COM" 
-    + std::to_string(AI+1) + " difficulty ([R]andom / [H]ard)");
+void printAISettings(std::string diffstring[], int AI)
+{
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << " CHOOSE AI DIFFICULTY" << std::endl;
+    std::cout << "COM1 difficulty ";
+    if (AI == 0) 
+    {
+        std::cout << "([R]andom / [H]ard)" << std::endl;
+    }
+    else
+    {
+        std::cout << "(" << diffstring[0] << ")" << std::endl;
+    }
+    if (AI == 1) 
+    {
+        std::cout << "COM2 difficulty ";
+        std::cout << "([R]andom / [H]ard)" << std::endl;
+    }
+    else if (AI > 1)
+    {
+        std::cout << "COM2 difficulty ";
+        std::cout << "(" << diffstring[1] << ")" << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "NOTE: Using HARD AI on larger boards";
+    std::cout << " (> 15x15) or with higher connect values";
+    std::cout << " (> 5) may cause the program to run";
+    std::cout << " slowly." << std::endl;
+
 }
 
 // Constructs and prints the 'aisettings' menugroup.
 int AISettings(int &AI1, int &AI2) {
-    menugroup aisettings("menus/aisettings.cfg");
-    int max = aisettings.groupGetMenuCount(); // 2
-    int temp[max] = {0};
+    std::string diffstring[2];
+    int max = 2;
+    int temp[2] = {0};
     int AI = 0;
 
     // For each menu in the menugroup, print it and read an int input.
     do {
         bool vPressed = false;
-        menu &currentmenu = aisettings.groupGetMenu(AI)->m;
-        AISettingsSetMenu(currentmenu, AI);
 
         do {
-            // Initialize the menu and print it.
-            gd::CURRENT_MENU =  0;
-            currentmenu.menuCalculateTitleAndOptionLengths();
-            currentmenu.menuCalculateAmountOfOptions();
-            char option = PrintAndInteract(aisettings);
-
-            // If the user pressed v/V, set vPressed to true and
-            // continue 
-            if (option == 'v' || option == 'V') 
-            {
-                vPressed = true;
-                continue;
-            } 
-
-            // If the user pressed < or >, toggle the AI difficulty
-            // for the current AI.
-            else if ((option == '<' || option == '>') && gd::VIEW != 1)
-            {
-                temp[AI] = 1 - temp[AI];
-
-                if (temp[AI] == 1) 
-                {
-                    currentmenu.menuSetTitle("COM" 
-                    + std::to_string(AI+1) + "     < RANDOM >");
-                } 
-                else 
-                {
-                    currentmenu.menuSetTitle("COM" 
-                    + std::to_string(AI+1) + "     < HARD >");
-                }
-            }
+            printAISettings(diffstring, AI);
+            std::cout << "Enter an option: ";
+            char option = bsf::readchr();
             
             // If the user pressed h/H or r/R, set the AI difficulty
             // for the current AI accordingly, set vPressed to true
             // and continue.
-            else if ((option == 'h' || option == 'H'))
+            if ((option == 'h' || option == 'H'))
             {
                 temp[AI] = 0;
                 vPressed = true;
@@ -305,27 +198,15 @@ int AISettings(int &AI1, int &AI2) {
         // If the user pressed v/V, set the menu title and options
         if (vPressed)
         {
-            std::string diffstring;
-
-            currentmenu.menuSetTitle("COM" + std::to_string(AI+1));
 
             if (temp[AI] == 1) 
             {
-                diffstring = "RANDOM";
+                diffstring[AI] = "RANDOM";
             } 
             else 
             {
-                diffstring = "HARD";
+                diffstring[AI] = "HARD";
             }
-
-            // Set the menu title and options accordingly.
-            currentmenu.menuSetOptions(0, diffstring);
-            currentmenu.menuSetOptions(1, "");
-            currentmenu.menuSetOptions(2, "");
-            currentmenu.menuSetCompactOption("COM" + std::to_string(AI+1) 
-                            + " difficulty (" + diffstring + ")");
-            currentmenu.menuCalculateTitleAndOptionLengths();
-            currentmenu.menuCalculateAmountOfOptions();
 
             AI++;
             continue;
@@ -335,7 +216,7 @@ int AISettings(int &AI1, int &AI2) {
 
     // Print the menugroup and ask the user if they're happy with 
     // their input.
-    aisettings.print(gd::VIEW, max, false, false);
+    printAISettings(diffstring, AI);
 
     if (IsHappy()) 
     {
@@ -343,7 +224,7 @@ int AISettings(int &AI1, int &AI2) {
     }
     else 
     {
-        CallAndReset(AISettings, AI1, AI2);
+        AISettings(AI1, AI2);
     }
     
     return 0;
@@ -352,24 +233,27 @@ int AISettings(int &AI1, int &AI2) {
 
 // Constructs and prints the 'gamemodes' menugroup.
 int Gamemodes(int &gm) {
-    menugroup gamemodes("menus/gamemodes.cfg");
-    menu &exit = gamemodes.groupGetMenu(3)->m;
-
-    // If the player has played 100 games, unlock quitting.
-    if (gd::GAMES_PLAYED >= 100) 
-    {   
-        UnlockQuitting(exit);
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << " CHOOSE A GAMEMODE" << std::endl;
+    std::cout << "[S]ingleplayer" << std::endl;
+    std::cout << "[M]ultiplayer" << std::endl;
+    std::cout << "[C]omputer" << std::endl;
+    std::cout << std::endl;
+    if (gd::GAMES_PLAYED < 100) 
+    {
+        std::cout << "[-] Quit Game (unlocks after "; 
+        std::cout << 100 - gd::GAMES_PLAYED << " games)" << std::endl;
     } 
     else 
     {
-        LockQuitting(exit);
+        std::cout << "[Q]uit Game" << std::endl;
     }
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Enter a gamemode: ";
 
-    exit.menuCalculateAmountOfOptions();
-    exit.menuCalculateTitleAndOptionLengths();
-
-    // Print the gamemodes menu and read a char option.
-    char option = PrintAndInteract(gamemodes);
+    char option = bsf::readchr();
 
     // Set the gamemode accordingly.
     if (option == 's' || option == 'S') {
@@ -400,10 +284,17 @@ int Gamemodes(int &gm) {
 
 // Constructs and prints the 'quickstart' menugroup.
 int Quickstart(int &m, int &n, int &h, int &gm) {
-    menugroup quickstart("menus/quickstart.cfg");
-
-    // Print the quickstart menu and read a char option.
-    char option = PrintAndInteract(quickstart);
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << " QUICK START" << std::endl;
+    std::cout << "[T]ic-Tac-Toe" << std::endl;
+    std::cout << "[C]onnect Four" << std::endl;
+    std::cout << "[G]omoku (custom)" << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Enter a game: ";
+    
+    char option = bsf::readchr();
 
     // Set the board dimensions and connect accordingly.
     if (option == 'T' || option == 't') 
@@ -416,7 +307,7 @@ int Quickstart(int &m, int &n, int &h, int &gm) {
     } 
     else if (option == 'G' || option == 'g') 
     {
-        CallAndReset(SetUpGomoku, m, n, h); 
+        SetUpGomoku(m, n, h); 
     } 
 
     // If no valid option was selected, call Quickstart() again.
@@ -430,8 +321,13 @@ int Quickstart(int &m, int &n, int &h, int &gm) {
 
 // Constructs and prints the 'aigames' menugroup.
 int AIGames() {
-    menugroup aigames("menus/aigames.cfg");
-    aigames.print(gd::VIEW);
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << " CHOOSE AMOUNT OF GAMES TO PLAY" << std::endl;
+    std::cout << "Enter an amount of games the AI should simulate";
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Enter an amount: ";
 
     // Read an int input between 0 and LARGE_NUM_MAX.
     int input = bsf::readint(0, gd::LARGE_NUM_MAX);
@@ -560,7 +456,7 @@ int ItsGoTime(int &m, int &n, int &h, int &gm, int &AI1, int &AI2) {
     {
         do
         {
-            gtp = CallAndReset(AIGames);
+            gtp = AIGames();
         } while (gtp == -1);
     }
 
@@ -625,20 +521,39 @@ int Quit() {
  */
 int main() {
 
+    // Infoblokje
+    std::cout << "+-------------------------+" << std::endl;
+    std::cout << "|     Opg. IV: Gomoku     |" << std::endl;
+    std::cout << "+-------------------------+" << std::endl;
+    std::cout << "| By: Taran van Ess '23   |" << std::endl;
+    std::cout << "| Study: Wis+Informatica  |" << std::endl;
+    std::cout << "| Date: 26/12/2023        |" << std::endl;
+    std::cout << "| Student: 4125185        |" << std::endl;
+    std::cout << "+-------------------------+" << std::endl;
+    std::cout << "This program is a game in which two players take";
+    std::cout << " turns placing pieces on a board." << std::endl;
+    std::cout << "The first player to connect a certain amount of"; 
+    std::cout << " pieces wins." << std::endl;
+    std::cout << "You can play alone, together, or watch two computers";
+    std::cout << " play against eachother." << std::endl;
+    std::cout << std::endl;  
+    std::cout << "Enter some key to start. ";
+    bsf::readchr();
+
     do {
         int m, n, h, gm;
         int AI1 = 0; int AI2 = 0;
 
-        CallAndReset(Gamemodes, gm);
-        CallAndReset(Quickstart, m, n, h, gm);
+        Gamemodes(gm);
+        Quickstart(m, n, h, gm);
         if (gm == 2)
         {
-            CallAndReset(AISettings, AI1, AI2);
+            AISettings(AI1, AI2);
         }
 
-        CallAndReset(ItsGoTime, m, n, h, gm, AI1, AI2);
+        ItsGoTime(m, n, h, gm, AI1, AI2);
 
-    } while (!CallAndReset(Quit));
+    } while (!Quit());
 
 
     return 0;
