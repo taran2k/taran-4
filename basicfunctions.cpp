@@ -14,11 +14,53 @@ char BasicFunctions::readchr() {
     return c;
 }
 
+// Reads the value of a sequence of letters
+int BasicFunctions::readletval(char input) {
+    int result = 0;
+
+	if (bsf::ltoi(input) != -1)
+	{
+		result = bsf::ltoi(input);
+	}
+	else
+	{
+
+		return -1;
+	}
+
+	while (((std::cin.peek() <= '0' || std::cin.peek() >= '9') 
+		&& std::cin.peek() != '\n'))
+	{
+
+		if ((bsf::ltoi(input) != -1 &&
+			(result <= ((gd::MAX - bsf::ltoi(input)) / alph::size))))
+		{
+
+			result *= alph::size;
+			result += bsf::ltoi(input);
+		}
+		else
+		{
+
+			// cin.get until cin.get == \n
+			while (std::cin.peek() != '\n')
+			{
+				std::cin.get();
+			}
+
+			return -1;
+		}
+
+		input = bsf::readchr();
+	}
+
+    return result;
+}
+
 // Reads and returns a positive integer from the input stream
-int BasicFunctions::readint(int min, int max) {
+int BasicFunctions::readint(int min, int max, char c) {
     int num = 0;
     bool overflow = false;
-    char c = readchr();
 
     if (c < '0' || c > '9') {
         return -1;

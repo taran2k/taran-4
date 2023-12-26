@@ -459,23 +459,6 @@ int AIGames() {
     return 0;
 }
 
-int DetailedHistogram(int games_won_per_turn[], int m, int n) {
-    for (int i = 0; i < bsf::ceil((m * n) / 10.0); i++)
-    {
-        std::cout << i << ": ";
-        for (int j = 0; j < 10; j++)
-        {
-            for (int k = 0; k < games_won_per_turn[i*10+j]; k++)
-            {
-                std::cout << j << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-
-    return 0;
-}
-
 int Histogram(int games_won_per_turn[], int m, int n) {
     bool print = false;
     for (int i = 0; i < (m * n); i++)
@@ -548,7 +531,7 @@ int Statistics(int m, int n, int gtp, int games_won_per_turn[])
     int p1wins = GamesWonByPlayer1(m, n, games_won_per_turn);
     int p2wins = GamesWonByPlayer2(m, n, games_won_per_turn);
     int ties = gtp - p1wins - p2wins;
-
+    std::cout << std::endl;
     std::cout << "Statistics" << std::endl;
     std::cout << "Games played: " << gtp << std::endl;
     std::cout << "Games won by player 1: " << p1wins;
@@ -591,11 +574,14 @@ int ItsGoTime(int &m, int &n, int &h, int &gm, int &AI1, int &AI2) {
         games_won_per_turn[endturn]++;
     }
 
-    // Print the statistics menu.
-    std::cout << std::endl;
-    std::cout << "GAMES WON PER TURN HISTOGRAM" << std::endl;
-    Histogram(games_won_per_turn, m, n);
-    Statistics(m, n, gtp, games_won_per_turn);
+    // Print the statistics menu if more than 1 game was played.
+    if (gtp > 1) 
+    {
+        std::cout << std::endl;
+        std::cout << "GAMES WON PER TURN HISTOGRAM" << std::endl;
+        Histogram(games_won_per_turn, m, n);
+        Statistics(m, n, gtp, games_won_per_turn);
+    }
 
     return 0;
 }

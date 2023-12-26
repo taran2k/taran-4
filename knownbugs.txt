@@ -6,8 +6,3 @@ moreover, those tiles (specifically the first tile that is overlength) will not 
 neighbours set. within this game, it is not a problem, because all created rows have the same size.
 
 
-you can navigate too far in navigation mode
-
-double letters not working
-
-gamemode not passed through to setupgomoku in hoofd.cpp

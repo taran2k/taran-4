@@ -39,25 +39,23 @@ bool MoveStack::isEmpty()
 // Pop (delete) the top move from the stack
 void MoveStack::pop()
 {
-    if (isEmpty())
+    if (!isEmpty())
     {
-        return;
+        Node *temp = top;
+        top = top->next;
+        delete temp;
     }
-
-    Node *temp = top;
-    top = top->next;
-    delete temp;
 }
 
 // Return the move at the top of the stack
 Move *MoveStack::peek()
 {
-    if (isEmpty())
+    if (!isEmpty())
     {
-        return nullptr; // return bogus move
+        return &(top->move);
     }
 
-    return &(top->move);
+    return nullptr;
 }
 
 // Game constructor
@@ -67,7 +65,7 @@ Game::Game(int m, int n, int h, int gm, int AI1, int AI2)
     concluded = false;
     gamemode = gm;
     AILevel[0] = AI1;
-    AILevel[1] = AI2; 
+    AILevel[1] = AI2;
     win_threshold = h;
     turn = 1;
     current_player = 1;
@@ -110,18 +108,18 @@ void Game::calculatePermutations()
 
                 if (doesTileConcludeGame(currentTile)) // if this turn
                 {                                      // ends the game
-                    perm++;                            // increment 
+                    perm++;                            // increment
                 }                                      // perm
-                else                         // otherwise
-                {                            // calculate the permttns
-                    calculatePermutations(); // for the new board
+                else                                   // otherwise
+                {                                      // calculate the permttns
+                    calculatePermutations();           // for the new board
                 }
 
                 switchCurrentPlayer();
                 turn--;
                 currentTile->colour = nullptr; // then undo the move
 
-                // If the amount of permutations is higher than 
+                // If the amount of permutations is higher than
                 // LARGE_NUM_MAX or < 0, set perm to -1 to indicate
                 // that the number of permutations is too high to be
                 // calculated.
@@ -291,9 +289,7 @@ bool Game::isTie()
 
 bool Game::doesTileConcludeGame(Tile *placedTile)
 {
-    return (board->getLongestConnection(placedTile) >=
-                win_threshold ||
-            isTie());
+    return (board->getLongestConnection(placedTile) >= win_threshold || isTie());
 }
 // END GETTERS
 
@@ -351,13 +347,13 @@ void Game::AISetSearchRadius()
     }
     scope.tilesCount = 0;
 
-    int searchRadius = win_threshold - 1; 
+    int searchRadius = win_threshold - 1;
 
     // Get the last and second to last moves
     Move lastMove = *undoStack.peek();
-    undoStack.pop();                                                  
-    Move secondLastMove = undoStack.isEmpty() ? lastMove : *undoStack.peek(); 
-    undoStack.push(lastMove);                                        
+    undoStack.pop();
+    Move secondLastMove = undoStack.isEmpty() ? lastMove : *undoStack.peek();
+    undoStack.push(lastMove);
 
     // add tiles within the search radius to the tilesToCheck array
     auto addTilesWithinRadius = [&](Move move)
@@ -395,7 +391,6 @@ void Game::AISetSearchRadius()
     // Add tiles around the last and second to last moves
     addTilesWithinRadius(lastMove);
     addTilesWithinRadius(secondLastMove);
-
 }
 
 // Calculate if there is a tile that can be placed to prevent
@@ -416,7 +411,7 @@ Tile *Game::AIDefenseDepth1(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[2-current_player];
+                currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIBlockWin();
@@ -431,7 +426,7 @@ Tile *Game::AIDefenseDepth1(Tile *skipTile)
                 if (t && s)
                 {
                     return currentTile;
-                }   
+                }
             }
             currentTile = board->findTileOnBoard(row, ++column);
         }
@@ -443,7 +438,7 @@ Tile *Game::AIDefenseDepth1(Tile *skipTile)
 
 // Calculate if there is a tile that can be placed to prevent
 // the opponent from a guaranteed win in 3 turns (that is, if
-// a single turn by the opponent creates at least 2 assists 
+// a single turn by the opponent creates at least 2 assists
 // for winning possibilities two moves thereafter)
 // Returns a pointer to the tile that should be placed.
 Tile *Game::AIDefenseDepth2(Tile *skipTile)
@@ -459,7 +454,7 @@ Tile *Game::AIDefenseDepth2(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[2-current_player];
+                currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIDefenseDepth1();
@@ -474,7 +469,7 @@ Tile *Game::AIDefenseDepth2(Tile *skipTile)
                 if (t && s)
                 {
                     return currentTile;
-                }   
+                }
             }
             currentTile = board->findTileOnBoard(row, ++column);
         }
@@ -496,10 +491,14 @@ Tile *Game::AIDefenseDepth3(Tile *skipTile)
 {
     // Call AISearchRadius and get an AIScope object with the
     // tiles to check and the number of tiles to check
-    std::cout << "Searching " << bsf::pow(scope.tilesCount, 8) << " tiles." << std::endl; // debug
-    for (int i = 0; i < scope.tilesCount; ++i) {
-        Tile* currentTile = scope.tilesToCheck[i];
-        if (skipTile != currentTile && !currentTile->colour) {
+    std::cout << "AI is searching through "; 
+    std::cout << bsf::pow(scope.tilesCount, 8);
+    std::cout << " tiles." << std::endl; // debug
+    for (int i = 0; i < scope.tilesCount; ++i)
+    {
+        Tile *currentTile = scope.tilesToCheck[i];
+        if (skipTile != currentTile && !currentTile->colour)
+        {
             // simulate an opposite turn
             currentTile->colour = gd::PLAYER_COLOURS[2 - current_player];
 
@@ -541,11 +540,11 @@ Tile *Game::AIOffenseDepth1(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a turn
-                currentTile->colour = gd::PLAYER_COLOURS[current_player-1];
+                currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
 
-                // see if a win can be made 
+                // see if a win can be made
                 Tile *t = AIWin();
-                // see if another win can be made 
+                // see if another win can be made
                 Tile *s = AIWin(t);
 
                 // undo simulation
@@ -556,7 +555,7 @@ Tile *Game::AIOffenseDepth1(Tile *skipTile)
                 if (t && s)
                 {
                     return currentTile;
-                }   
+                }
             }
             currentTile = board->findTileOnBoard(row, ++column);
         }
@@ -584,7 +583,7 @@ Tile *Game::AIOffenseDepth2(Tile *skipTile)
             if (skipTile != currentTile && !currentTile->colour)
             {
                 // simulate a opposite turn
-                currentTile->colour = gd::PLAYER_COLOURS[current_player-1];
+                currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
 
                 // see if a win can be blocked with the simulated move
                 Tile *t = AIOffenseDepth1();
@@ -599,7 +598,7 @@ Tile *Game::AIOffenseDepth2(Tile *skipTile)
                 if (t && s)
                 {
                     return currentTile;
-                }   
+                }
             }
             currentTile = board->findTileOnBoard(row, ++column);
         }
@@ -621,12 +620,16 @@ Tile *Game::AIOffenseDepth3(Tile *skipTile)
 {
     // Call AISearchRadius and get an AIScope object with the
     // tiles to check and the number of tiles to check
-    std::cout << "Searching " << bsf::pow(scope.tilesCount, 8) << " tiles." << std::endl; // debug
-    for (int i = 0; i < scope.tilesCount; ++i) {
-        Tile* currentTile = scope.tilesToCheck[i];
-        if (skipTile != currentTile && !currentTile->colour) {
+    std::cout << "AI is searching through ";
+    std::cout << bsf::pow(scope.tilesCount, 8) << " tiles.";
+    std::cout << std::endl; // debug
+    for (int i = 0; i < scope.tilesCount; ++i)
+    {
+        Tile *currentTile = scope.tilesToCheck[i];
+        if (skipTile != currentTile && !currentTile->colour)
+        {
             // simulate a opposite turn
-            currentTile->colour = gd::PLAYER_COLOURS[current_player-1];
+            currentTile->colour = gd::PLAYER_COLOURS[current_player - 1];
 
             // see if a win can be blocked with the simulated move
             Tile *t = AIOffenseDepth2();
@@ -676,19 +679,16 @@ Tile *Game::AIOffense()
                 if (preferredTile)
                 {
                     if (int a =
-                    board->getLongestConnection(currentTile) 
-                    > longestConnection)
+                            board->getLongestConnection(currentTile) > longestConnection)
                     {
                         preferredTile = currentTile;
                         longestConnection = a;
                     }
 
-                    else if (board->getLongestConnection(currentTile) 
-                    == longestConnection)
+                    else if (board->getLongestConnection(currentTile) == longestConnection)
                     {
-                        if (int b = 
-                        board->getTotalConnections(currentTile) 
-                        > totalConnections)
+                        if (int b =
+                                board->getTotalConnections(currentTile) > totalConnections)
                         {
                             preferredTile = currentTile;
                             totalConnections = b;
@@ -788,24 +788,16 @@ Tile *Game::AISmartPlay()
     {
         AISetSearchRadius();
         last = board->findTileOnBoard(undoStack.peek()->row,
-                                    undoStack.peek()->column);
+                                      undoStack.peek()->column);
     }
     // If the AI can win, place a tile to win
     if (Tile *t = AIWin())
     {
-        std::cout << "AI can win" << std::endl; // debug
-        std::cout << "AI placed a tile at ";
-        std::cout << board->getRow(t) << ", ";
-        std::cout << board->getColumn(t) << std::endl;
         tileToPlace = t;
     }
     // If the AI can block a win, place a tile to block the win
     else if (Tile *t = AIBlockWin())
     {
-        std::cout << "AI can block win" << std::endl; // debug
-        std::cout << "AI placed a tile at ";
-        std::cout << board->getRow(t) << ", ";
-        std::cout << board->getColumn(t) << std::endl;
         tileToPlace = t;
     }
 
@@ -817,7 +809,7 @@ Tile *Game::AISmartPlay()
 
         if (board->getHeight() % 2 == 0)
         {
-            row = board->getHeight() / 2 + rand()%2;
+            row = board->getHeight() / 2 + rand() % 2;
         }
         else
         {
@@ -826,7 +818,7 @@ Tile *Game::AISmartPlay()
 
         if (board->getWidth() % 2 == 0)
         {
-            column = board->getWidth() / 2 + rand()%2;
+            column = board->getWidth() / 2 + rand() % 2;
         }
         else
         {
@@ -838,32 +830,32 @@ Tile *Game::AISmartPlay()
     // IF IT'S NOT TURN 1...
     else if (Tile *t = AIOffenseDepth1())
     {
-        //std::cout << "AI will attack at level 1" << std::endl; // debug
+        // std::cout << "AI will attack at level 1" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth1())
     {
-        //std::cout << "AI will defend at level 1" << std::endl; // debug
+        // std::cout << "AI will defend at level 1" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth2())
     {
-        //std::cout << "AI will attack at level 2" << std::endl; // debug
+        // std::cout << "AI will attack at level 2" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth2())
     {
-        //std::cout << "AI will defend at level 2" << std::endl; // debug
+        // std::cout << "AI will defend at level 2" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIOffenseDepth3())
     {
-        //std::cout << "AI will attack at level 3" << std::endl; // debug
+        // std::cout << "AI will attack at level 3" << std::endl; // debug
         tileToPlace = t;
     }
     else if (Tile *t = AIDefenseDepth3())
     {
-        //std::cout << "AI will defend at level 3" << std::endl; // debug
+        // std::cout << "AI will defend at level 3" << std::endl; // debug
         tileToPlace = t;
     }
 
@@ -897,11 +889,16 @@ Tile *Game::AISmartPlay()
                 {
                     continue;
                 }
-                int distance = bsf::min(
-                    bsf::min(board->getHeight() - board->getRow(currentTile),
-                             board->getRow(currentTile) - 1),
-                    bsf::min(board->getWidth() - board->getColumn(currentTile),
-                             board->getColumn(currentTile) - 1));
+                int distance = 
+                bsf::min(
+                    bsf::min(board->getHeight() - 
+                             board->getRow(currentTile),
+                             board->getRow(currentTile) - 1)
+                             ,
+                    bsf::min(board->getWidth() - 
+                             board->getColumn(currentTile),
+                             board->getColumn(currentTile) - 1)
+                        );
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -921,14 +918,16 @@ Tile *Game::AISmartPlay()
         tileToPlace = t;
     }
 
-    
     // If after all this, no tile has been found, place a tile
     // randomly next to the last tile that was placed.
     if ((!tileToPlace || tileToPlace->colour) && last)
     {
-        for (int i = 0; i < 8; i++) {
-            if (last->adjacents[i] && !last->adjacents[i]->colour) {
-                if (rand() % 2 == 0) {
+        for (int i = 0; i < 8; i++)
+        {
+            if (last->adjacents[i] && !last->adjacents[i]->colour)
+            {
+                if (rand() % 2 == 0)
+                {
                     tileToPlace = last->adjacents[i];
                     break;
                 }
@@ -938,35 +937,36 @@ Tile *Game::AISmartPlay()
     // If even that doesn't do anything, place a tile randomly on one
     // an open spot
     if (!tileToPlace || tileToPlace->colour)
-        {
-            int row = 1;
-            int column = 1;
-            Tile *currentTile = board->findTileOnBoard(row, column);
-            bool found = false;
+    {
+        int row = 1;
+        int column = 1;
+        Tile *currentTile = board->findTileOnBoard(row, column);
+        bool found = false;
 
-            while (currentTile && !found)
+        while (currentTile && !found)
+        {
+            while (currentTile)
             {
-                while (currentTile)
+                if (!currentTile->colour)
                 {
-                    if (!currentTile->colour)
+                    if (rand() % 2 == 0)
                     {
-                        if (rand() % 2 == 0) {
-                            tileToPlace = currentTile;
-                            found = true;
-                            break;
-                        }
+                        tileToPlace = currentTile;
+                        found = true;
+                        break;
                     }
-                    currentTile = board->findTileOnBoard(row, ++column);
                 }
-                column = 1;
-                currentTile = board->findTileOnBoard(++row, column);
+                currentTile = board->findTileOnBoard(row, ++column);
             }
+            column = 1;
+            currentTile = board->findTileOnBoard(++row, column);
         }
+    }
 
     // If even that doesn't do anything, the board must be full
     if (!tileToPlace || tileToPlace->colour)
     {
-        std::cout << "AI could not make a move. The board is full."; //debug
+        std::cout << "AI could not make a move. The board is full.";
         std::cout << std::endl;
         return nullptr;
     }
@@ -978,17 +978,17 @@ Tile *Game::AISmartPlay()
 }
 
 // Place a tile randomly on an open spot
-Tile *Game::AIRandomPlay() 
+Tile *Game::AIRandomPlay()
 {
     Tile *tileToPlace;
 
-    do {
+    do
+    {
         int row = rand() % board->getHeight() + 1;
         int column = rand() % board->getWidth() + 1;
 
         tileToPlace = board->findTileOnBoard(row, column);
     } while (tileToPlace->colour);
-    
 
     // Place the tile
     tileToPlace->colour = gd::PLAYER_COLOURS[current_player - 1];
@@ -999,29 +999,42 @@ Tile *Game::AIRandomPlay()
 // Place a tile based on the input of the player
 Tile *Game::HumanPlay()
 {
+    int result = 0;
+    int column = 0;
+    int row = 0;
+    char input;
+
     printGame();
     printInput();
-    char input = bsf::readchr();
-    std::cout << std::endl;
+
+    // Read the input
+    input = bsf::readchr();
+    // If the input is a special key, read the option input
     if (isSpecialKey(input))
     {
         readOptionInput(input);
-        return nullptr;
+        return nullptr; // <- return nullptr to indicate that no tile
+                        //    was placed
     }
-    input = bsf::ltoi(input);
-    if (input == -1)
+
+    result = bsf::readletval(input);
+    if (result >= 0)
+    {
+        column = result;
+    }
+    else
     {
         std::cout << "Invalid input, try again" << std::endl;
         return nullptr;
     }
-    int column = input;
+
     input = bsf::readint();
     if (input == -1)
     {
         std::cout << "Invalid input, try again" << std::endl;
         return nullptr;
     }
-    int row = input;
+    row = input;
 
     // Return the tile that was placed
     return board->findAndPlace(column, row,
@@ -1035,7 +1048,7 @@ Tile *Game::playturn()
     {
         if (current_player == 1)
         {
-            if (AILevel[current_player-1] == 0) 
+            if (AILevel[current_player - 1] == 0)
             {
                 return AISmartPlay();
             }
@@ -1057,7 +1070,7 @@ Tile *Game::playturn()
 
     if (gamemode == 2)
     {
-        if (AILevel[current_player-1] == 0) 
+        if (AILevel[current_player - 1] == 0)
         {
             return AISmartPlay();
         }
@@ -1075,7 +1088,9 @@ int Game::play()
 {
     while (!concluded)
     {
+
         if (Tile *lastTile = playturn())
+
         {
             turn++;
             if (doesTileConcludeGame(lastTile))
@@ -1091,25 +1106,34 @@ int Game::play()
                 {
                     concluded = true;
                     board->print();
+                    std::cout << std::endl;
                     std::cout << "Game was won by player ";
-                    std::cout << current_player << ". Congrats!";
+                    std::cout << current_player;
                     std::cout << std::endl;
                     break;
                 }
             }
+            
             while (redoStack.peek()) // <- clear redo stack
             {
                 redoStack.pop();
             }
-            undoStack.push(Move{board->getRow(lastTile),
-                                board->getColumn(lastTile),
-                                gd::PLAYER_COLOURS[current_player - 1]});
+
+            undoStack.push(
+                        Move
+                            {
+                              board->getRow(lastTile),
+                              board->getColumn(lastTile),
+                              gd::PLAYER_COLOURS[current_player - 1]
+                            }
+                        );
         }
+
         else
+
         {
             continue;
         }
-
 
         switchCurrentPlayer();
         perm = 0;

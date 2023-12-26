@@ -18,8 +18,104 @@ Tile::Tile()
 // Tile destructor
 Tile::~Tile()
 {
-  delete colour;
 }
+
+// TileStack constructor
+TileStack::TileStack()
+{
+  top = nullptr;
+}
+
+// TileStack destructor
+TileStack::~TileStack()
+{
+  while (top) 
+  {
+    pop();
+  }
+}
+
+// Pushes a tile pointer to the stack
+void TileStack::push(Tile tile)
+{
+  Node *node = new Node{tile, top};
+  top = node;
+}
+
+// Returns true if the stack is empty, false otherwise
+bool TileStack::isEmpty()
+{
+  return top == nullptr;
+}
+
+// Pops a tile pointer from the stack
+void TileStack::pop()
+{
+  if (!isEmpty())
+  {
+    Node *node = top;
+    top = top->next;
+    delete node;
+  }
+}
+
+// Returns the tile pointer at the top of the stack
+Tile *TileStack::peek()
+{
+  if (!isEmpty())
+  {
+    return &(top->tile);
+  }
+
+  return nullptr;
+}
+
+// Returns a tile pointer to the first adjacent-free tile
+// in the stack (meaning: for all i, adjacents[i] == nullptr)
+Tile *TileStack::firstfree()
+{
+  Node *currentNode = top;
+
+  while (currentNode)
+  {
+    bool isFree = true;
+    for (int i = 0; i < 8; i++)
+    {
+      if (currentNode->tile.adjacents[i])
+      {
+        isFree = false;
+        break;
+      }
+    }
+
+    if (isFree)
+    {
+      return &(currentNode->tile);
+    }
+
+    currentNode = currentNode->next;
+  }
+
+  return nullptr;
+}
+
+Tile *TileStack::next(Tile *tile)
+{
+  Node *currentNode = top;
+
+  while (currentNode)
+  {
+    if (&(currentNode->tile) == tile)
+    {
+      return &(currentNode->next->tile);
+    }
+
+    currentNode = currentNode->next;
+  }
+
+  return nullptr;
+}
+
 
 // Goboard constructor
 Goboard::Goboard(int height, int width)
@@ -27,10 +123,6 @@ Goboard::Goboard(int height, int width)
   this->height = height;
   this->width = width;
   in = nullptr;
-  for (int i = 0; i < gd::MAX * gd::MAX + 1; i++)
-  {
-    bucket[i] = nullptr;
-  }
 
   // Create all the tiles needed for the board.
   for (int i = 0; i < height; i++)
@@ -48,67 +140,16 @@ Goboard::Goboard(int height, int width)
 // Goboard destructor
 Goboard::~Goboard()
 {
-  for (int i = 0; i < gd::MAX * gd::MAX; i++)
-  {
-    delete bucket[i];
-  }
+
 }
 
-// Creates a new tile, automatically adds it to the
-// bucket and returns a pointer to it. Tiles can only
-// be created if there's space left in the bucket.
+// Creates a new tile, adds it to the
+// tileStack and returns a pointer to it.
 Tile *Goboard::newTile()
 {
-  if (!isBucketFull())
-  {
-    Tile *tile = new Tile;
-    addTileToBucket(tile);
-
-    return tile;
-  }
-
-  std::cout << "[ERROR] COULD NOT CREATE TILE | ";
-  std::cout << " Creation of tile would lead to bucket overflow";
-
-  return nullptr;
-}
-
-// Gets the bucket size and adds a tile pointer to the
-// bucket at the index of the bucket size (size is always
-// one more than the index of the last element).
-void Goboard::addTileToBucket(Tile *tile)
-{
-  if (!isBucketFull())
-  {
-    bucket[getBucketSize()] = tile;
-  }
-  else
-  {
-    std::cout << "[ERROR] COULD NOT ADD TILE TO BUCKET | ";
-    std::cout << " The bucket is already full!";
-  }
-}
-
-// Takes a tile pointer from the last index of the bucket, removes
-// the pointer from the bucket and then returns the pointer.
-Tile *Goboard::takeTileFromBucket()
-{
-  int s = getBucketSize();
-
-  if (s > 0)
-  {
-    Tile *tile = bucket[s - 1];
-    bucket[s - 1] = nullptr;
-    return tile;
-  }
-  else
-  {
-    std::cout << "[ERROR] COULD NOT TAKE TILE FROM BUCKET | ";
-    std::cout << " The bucket is empty!";
-    std::cout << std::endl; // debug
-  }
-
-  return nullptr;
+  Tile tile;
+  tileStack.push(tile);
+  return tileStack.peek();
 }
 
 // Connect two tiles together by setting the pointer
@@ -123,10 +164,6 @@ void Goboard::connectTilesHorizontally(Tile *tile1, Tile *tile2)
   {
     tile1->adjacents[2] = tile2;
     tile2->adjacents[6] = tile1;
-  }
-  else
-  {
-    //debug
   }
 }
 
@@ -167,7 +204,7 @@ void Goboard::connectTilesDiagonallyDownwards(Tile *tile1, Tile *tile2)
 }
 
 // Disconnects a tile from any adjacent tiles and add it
-// to the bucket
+// to the tileStack
 void Goboard::disconnectTile(Tile *tile)
 {
   if (tile)
@@ -179,13 +216,8 @@ void Goboard::disconnectTile(Tile *tile)
         // 0 <=> 4, 1 <=> 5, 2 <=> 6, 3 <=> 7, 4 <=> 0, 5 <=> 1 etc..
         tile->adjacents[i]->adjacents[(i + 4) % 8] = nullptr;
         tile->adjacents[i] = nullptr;
-        addTileToBucket(tile);
       }
     }
-  }
-  else
-  {
-    std::cout << "[ERROR] CAN NOT DISCONNECT TILE" << std::endl;
   }
 }
 
@@ -193,13 +225,13 @@ void Goboard::disconnectTile(Tile *tile)
 // returns the address of the left most tile.
 Tile *Goboard::makeRow(int length)
 {
-  Tile *currentTile = takeTileFromBucket();
+  Tile *currentTile = tileStack.firstfree();
   Tile *row = currentTile;
 
   for (int i = 0; i < length - 1; i++)
   {
-    Tile *newTile = takeTileFromBucket();       // <- not actually new
-    connectTilesHorizontally(currentTile, newTile); // but from bucket
+    Tile *newTile = tileStack.next(currentTile);     // <- not actually new
+    connectTilesHorizontally(currentTile, newTile); // but from stack
     currentTile = newTile;
   }
 
@@ -257,7 +289,7 @@ void Goboard::connectRows(Tile *row1, Tile *row2)
 // Makes a board by connecting rows vertically.
 Tile *Goboard::makeBoard()
 {
-  // Use tiles from bucket to create rows and connect
+  // Use tiles from stack to create rows and connect
   // these rows.
   Tile *currentRow = makeRow(width);
   in = currentRow;
@@ -271,69 +303,36 @@ Tile *Goboard::makeBoard()
   return in;
 }
 
-// Empties a row of tiles by disconnecting them from
-// adjacent tiles and adding them to the bucket.
-void Goboard::emptyRow(Tile *row)
+// Disbands a row by disconnecting all tiles in the row
+void Goboard::disbandRow(Tile *row)
 {
   Tile *currentTile = row;
 
-  do
+  while (currentTile) 
   {
-    if (currentTile->adjacents[2])
-    {
-      currentTile = currentTile->adjacents[2];
-      disconnectTile(currentTile->adjacents[6]);
-    }
-    else
-    {
-      disconnectTile(currentTile);
-      break;
-    }
-  } while (currentTile);
+    Tile *nextTile = currentTile->adjacents[2];
+    disconnectTile(currentTile);
+    currentTile = nextTile;
+  }
 }
 
-// Empties the board by disconnecting all tiles from
-// adjacent tiles and adding them to the bucket.
-void Goboard::emptyBoard()
+// Disbands the board by disbanding all rows
+void Goboard::disbandBoard()
 {
   Tile *currentTile = in;
 
-  do
+  while (currentTile)
   {
-    if (currentTile->adjacents[4])
-    {
-      currentTile = currentTile->adjacents[4];
-      emptyRow(currentTile->adjacents[0]);
-      addTileToBucket(currentTile->adjacents[0]);
-    }
-    else
-    {
-      emptyRow(currentTile);
-      addTileToBucket(currentTile);
-      break;
-    }
-  } while (currentTile);
+    Tile *nextTile = currentTile->adjacents[4];
+    disbandRow(currentTile);
+    currentTile = nextTile;
+  } 
 }
 
 // GETTERS
 Tile *Goboard::getInTile()
 {
   return in;
-}
-
-bool Goboard::isBucketFull()
-{
-  return getBucketSize() == gd::MAX * gd::MAX;
-}
-
-int Goboard::getBucketSize()
-{
-  int i = 0;
-  while (bucket[i])
-  {
-    i++;
-  }
-  return i;
 }
 
 int Goboard::getHeight()

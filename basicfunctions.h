@@ -3,7 +3,8 @@
 
 namespace BasicFunctions {
     extern char readchr();
-    extern int readint(int min = 0, int max = 99999);
+    extern int readletval(char input = readchr()); 
+    extern int readint(int min = 0, int max = 99999, char c = readchr());
     extern bool isnum(char c);
     extern int ltoi(char c); // letter to int
     extern char itol(int i); // int to letter (lowercase)
